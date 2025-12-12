@@ -1,0 +1,98 @@
+Create a LinkedIn content automation application that helps technical founders automatically generate and post LinkedIn content based on their actual work activities.
+
+**Application Type:** Web-based dashboard with integration capabilities
+
+**Core Purpose:** 
+Transform a user's daily work activities (code commits, completed tasks, revenue milestones, industry news) into engaging LinkedIn posts automatically, minimizing the need for manual content creation.
+
+**Key Features:**
+
+1. **Integration Connection Hub**
+   - Allow users to connect their work tools through an integrations dashboard
+   - Support connections to code repositories (GitHub/GitLab)
+   - Support connections to project management tools (Linear/Jira)
+   - Support connections to payment platforms (Stripe/RevenueCat)
+   - Support RSS feed monitoring for industry news
+   - Display connection status for each integration
+
+2. **Automated Work Activity Monitoring**
+   - Monitor and detect significant events from connected tools:
+     * New code commits with meaningful changes
+     * Completed tasks or tickets
+     * Revenue milestones reached
+     * Relevant industry news in user's niche
+   - Display a feed of detected activities in the dashboard
+   - Allow users to see what activities were captured
+
+3. **AI Content Generation Engine**
+   - Automatically convert detected work activities into LinkedIn post drafts
+   - Transform technical language into engaging social media content
+   - Generate different content formats: text posts, carousel concepts, and long-form posts
+   - Examples of transformations:
+     * "Fixed authentication bug" → "Why we rewrote our entire auth logic for security"
+     * "Shipped dark mode feature" → "How we designed dark mode: lessons learned"
+     * "Reached $1k MRR" → "Zero to $1k: What we learned about pricing"
+
+4. **Style Customization**
+   - Allow users to input examples of their preferred writing style or favorite creators
+   - Apply that style/tone to all generated content
+   - Offer style presets like "contrarian," "humble builder," or "data-focused"
+
+5. **Content Queue and Approval System**
+   - Display all auto-generated content drafts in a queue
+   - Allow users to review, edit, or approve posts before publishing
+   - Show preview of how posts will appear on LinkedIn
+   - Enable scheduling of approved posts
+   - Allow users to reject or archive drafts they don't want
+
+6. **Influencer and Trend Monitoring**
+   - Let users specify influencers or competitors to monitor
+   - Identify trending topics and common questions in their industry
+   - Analyze popular posts to find content gaps (unanswered questions)
+   - Generate post suggestions based on identified gaps
+   - Example: "50 people asked about X in [Influencer]'s comments - here's a draft post answering that"
+
+7. **Smart Comment Suggestions**
+   - Generate suggested comments for relevant posts in user's industry
+   - Display comment drafts for user approval
+   - Allow one-click approval to post comments
+   - Focus on high-value, thoughtful comments rather than generic responses
+
+8. **Analytics Dashboard**
+   - Show performance metrics for published posts
+   - Display engagement statistics (views, likes, comments, shares)
+   - Track which types of auto-generated content perform best
+   - Show posting frequency and consistency
+
+9. **Voice Profile Management**
+   - Build and maintain a "voice profile" for each user based on their preferences
+   - Learn from user edits to improve future content generation
+   - Allow users to update their voice profile settings
+
+**User Interface Requirements:**
+
+- Clean, simple dashboard as the main interface
+- Integrations hub should be prominent and easy to configure
+- Content queue should clearly show: draft posts, scheduled posts, and published posts
+- Each content item should display: the source activity, generated content, edit options, and post/schedule buttons
+- Settings area for style preferences and monitoring targets
+- Visual indicators for connection status and activity detection
+- Mobile-responsive design for reviewing and approving content on-the-go
+
+**Key User Flows:**
+
+1. **Onboarding:** User connects at least one integration → System starts monitoring → First content drafts appear within 24 hours
+2. **Daily Use:** User logs in → Reviews auto-generated drafts → Edits if needed → Approves for posting → System publishes to LinkedIn
+3. **Passive Mode:** System runs automatically, generates content, and queues it for later review without user intervention
+
+**Important Behaviors:**
+
+- The system should work as a "silent partner" - generating content without requiring daily manual input
+- Focus on reducing friction: users should spend minutes reviewing, not hours creating
+- All LinkedIn posting should use official, approved methods to avoid account restrictions
+- Local browser extension component for research features that require viewing other profiles
+- Rate limiting on all automated activities to prevent triggering platform restrictions
+- Content should always require user approval before posting (safety mechanism)
+
+**Success Criteria:**
+The application successfully reduces the time technical founders spend on LinkedIn marketing from hours per week to minutes per week, while maintaining authentic, high-quality content based on their actual work.
