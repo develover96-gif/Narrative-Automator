@@ -7,6 +7,7 @@ import {
   watchedTopics,
   type User, 
   type InsertUser,
+  type PublicUser,
   type Integration,
   type InsertIntegration,
   type Activity,
@@ -19,42 +20,44 @@ import {
   type InsertWatchedTopic,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined>;
 
   // Integrations
-  getIntegrations(): Promise<Integration[]>;
+  getIntegrations(userId?: string): Promise<Integration[]>;
   getIntegration(id: string): Promise<Integration | undefined>;
-  getIntegrationByType(type: string): Promise<Integration | undefined>;
+  getIntegrationByType(type: string, userId?: string): Promise<Integration | undefined>;
   createIntegration(integration: InsertIntegration): Promise<Integration>;
   updateIntegration(id: string, data: Partial<InsertIntegration>): Promise<Integration | undefined>;
 
   // Activities
-  getActivities(): Promise<Activity[]>;
+  getActivities(userId?: string): Promise<Activity[]>;
   getActivity(id: string): Promise<Activity | undefined>;
   createActivity(activity: InsertActivity): Promise<Activity>;
   updateActivity(id: string, data: Partial<InsertActivity>): Promise<Activity | undefined>;
-  clearActivities(): Promise<void>;
+  clearActivities(userId?: string): Promise<void>;
 
   // Content
-  getContent(): Promise<Content[]>;
+  getContent(userId?: string): Promise<Content[]>;
   getContentItem(id: string): Promise<Content | undefined>;
   createContent(item: InsertContent): Promise<Content>;
   updateContent(id: string, data: Partial<InsertContent>): Promise<Content | undefined>;
   deleteContent(id: string): Promise<boolean>;
-  clearContent(): Promise<void>;
+  clearContent(userId?: string): Promise<void>;
 
   // Style Settings
-  getStyleSettings(): Promise<StyleSettings | undefined>;
+  getStyleSettings(userId?: string): Promise<StyleSettings | undefined>;
   createOrUpdateStyleSettings(settings: InsertStyleSettings): Promise<StyleSettings>;
 
   // Watched Topics
-  getWatchedTopics(): Promise<WatchedTopic[]>;
+  getWatchedTopics(userId?: string): Promise<WatchedTopic[]>;
   createWatchedTopic(topic: InsertWatchedTopic): Promise<WatchedTopic>;
   deleteWatchedTopic(id: string): Promise<boolean>;
 }
@@ -71,13 +74,26 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
+  async updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined> {
+    const [updated] = await db.update(users).set(data).where(eq(users.id, id)).returning();
+    return updated || undefined;
+  }
+
   // Integrations
-  async getIntegrations(): Promise<Integration[]> {
+  async getIntegrations(userId?: string): Promise<Integration[]> {
+    if (userId) {
+      return db.select().from(integrations).where(eq(integrations.userId, userId));
+    }
     return db.select().from(integrations);
   }
 
@@ -86,7 +102,12 @@ export class DatabaseStorage implements IStorage {
     return integration || undefined;
   }
 
-  async getIntegrationByType(type: string): Promise<Integration | undefined> {
+  async getIntegrationByType(type: string, userId?: string): Promise<Integration | undefined> {
+    if (userId) {
+      const [integration] = await db.select().from(integrations)
+        .where(and(eq(integrations.type, type), eq(integrations.userId, userId)));
+      return integration || undefined;
+    }
     const [integration] = await db.select().from(integrations).where(eq(integrations.type, type));
     return integration || undefined;
   }
@@ -102,7 +123,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Activities
-  async getActivities(): Promise<Activity[]> {
+  async getActivities(userId?: string): Promise<Activity[]> {
+    if (userId) {
+      return db.select().from(activities)
+        .where(eq(activities.userId, userId))
+        .orderBy(desc(activities.eventDate));
+    }
     return db.select().from(activities).orderBy(desc(activities.eventDate));
   }
 
@@ -121,12 +147,21 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
 
-  async clearActivities(): Promise<void> {
-    await db.delete(activities);
+  async clearActivities(userId?: string): Promise<void> {
+    if (userId) {
+      await db.delete(activities).where(eq(activities.userId, userId));
+    } else {
+      await db.delete(activities);
+    }
   }
 
   // Content
-  async getContent(): Promise<Content[]> {
+  async getContent(userId?: string): Promise<Content[]> {
+    if (userId) {
+      return db.select().from(content)
+        .where(eq(content.userId, userId))
+        .orderBy(desc(content.createdAt));
+    }
     return db.select().from(content).orderBy(desc(content.createdAt));
   }
 
@@ -153,18 +188,28 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async clearContent(): Promise<void> {
-    await db.delete(content);
+  async clearContent(userId?: string): Promise<void> {
+    if (userId) {
+      await db.delete(content).where(eq(content.userId, userId));
+    } else {
+      await db.delete(content);
+    }
   }
 
   // Style Settings
-  async getStyleSettings(): Promise<StyleSettings | undefined> {
+  async getStyleSettings(userId?: string): Promise<StyleSettings | undefined> {
+    if (userId) {
+      const [settings] = await db.select().from(styleSettings)
+        .where(eq(styleSettings.userId, userId))
+        .limit(1);
+      return settings || undefined;
+    }
     const [settings] = await db.select().from(styleSettings).limit(1);
     return settings || undefined;
   }
 
   async createOrUpdateStyleSettings(settings: InsertStyleSettings): Promise<StyleSettings> {
-    const existing = await this.getStyleSettings();
+    const existing = await this.getStyleSettings(settings.userId ?? undefined);
     if (existing) {
       const [updated] = await db.update(styleSettings)
         .set(settings)
@@ -177,7 +222,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Watched Topics
-  async getWatchedTopics(): Promise<WatchedTopic[]> {
+  async getWatchedTopics(userId?: string): Promise<WatchedTopic[]> {
+    if (userId) {
+      return db.select().from(watchedTopics)
+        .where(eq(watchedTopics.userId, userId))
+        .orderBy(desc(watchedTopics.createdAt));
+    }
     return db.select().from(watchedTopics).orderBy(desc(watchedTopics.createdAt));
   }
 

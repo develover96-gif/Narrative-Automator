@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Integrations from "@/pages/integrations";
@@ -15,48 +16,110 @@ import ContentQueue from "@/pages/content";
 import Analytics from "@/pages/analytics";
 import Topics from "@/pages/topics";
 import Settings from "@/pages/settings";
+import Profile from "@/pages/profile";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const style = {
+    "--sidebar-width": "260px",
+    "--sidebar-width-icon": "4rem",
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
+  return (
+    <SidebarProvider style={style as React.CSSProperties}>
+      <div className="flex h-screen w-full">
+        <AppSidebar />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <header className="flex items-center justify-between gap-4 px-5 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <ThemeToggle />
+          </header>
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (user) return <Redirect to="/" />;
+  return <>{children}</>;
+}
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/integrations" component={Integrations} />
-      <Route path="/activities" component={Activities} />
-      <Route path="/content" component={ContentQueue} />
-      <Route path="/analytics" component={Analytics} />
-      <Route path="/topics" component={Topics} />
-      <Route path="/settings" component={Settings} />
+      <Route path="/login">
+        <AuthGate><Login /></AuthGate>
+      </Route>
+      <Route path="/register">
+        <AuthGate><Register /></AuthGate>
+      </Route>
+      <Route path="/">
+        <ProtectedLayout><Dashboard /></ProtectedLayout>
+      </Route>
+      <Route path="/integrations">
+        <ProtectedLayout><Integrations /></ProtectedLayout>
+      </Route>
+      <Route path="/activities">
+        <ProtectedLayout><Activities /></ProtectedLayout>
+      </Route>
+      <Route path="/content">
+        <ProtectedLayout><ContentQueue /></ProtectedLayout>
+      </Route>
+      <Route path="/analytics">
+        <ProtectedLayout><Analytics /></ProtectedLayout>
+      </Route>
+      <Route path="/topics">
+        <ProtectedLayout><Topics /></ProtectedLayout>
+      </Route>
+      <Route path="/settings">
+        <ProtectedLayout><Settings /></ProtectedLayout>
+      </Route>
+      <Route path="/profile">
+        <ProtectedLayout><Profile /></ProtectedLayout>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function App() {
-  const style = {
-    "--sidebar-width": "260px",
-    "--sidebar-width-icon": "4rem",
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="linkedqueue-theme">
         <TooltipProvider>
-          <SidebarProvider style={style as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <header className="flex items-center justify-between gap-4 px-5 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <ThemeToggle />
-                </header>
-                <main className="flex-1 overflow-y-auto p-6">
-                  <div className="max-w-7xl mx-auto">
-                    <Router />
-                  </div>
-                </main>
-              </div>
-            </div>
-          </SidebarProvider>
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
           <Toaster />
         </TooltipProvider>
       </ThemeProvider>
