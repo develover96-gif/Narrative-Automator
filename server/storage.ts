@@ -4,6 +4,7 @@ import {
   activities, 
   content, 
   styleSettings,
+  watchedTopics,
   type User, 
   type InsertUser,
   type Integration,
@@ -13,7 +14,9 @@ import {
   type Content,
   type InsertContent,
   type StyleSettings,
-  type InsertStyleSettings
+  type InsertStyleSettings,
+  type WatchedTopic,
+  type InsertWatchedTopic,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -36,6 +39,7 @@ export interface IStorage {
   getActivity(id: string): Promise<Activity | undefined>;
   createActivity(activity: InsertActivity): Promise<Activity>;
   updateActivity(id: string, data: Partial<InsertActivity>): Promise<Activity | undefined>;
+  clearActivities(): Promise<void>;
 
   // Content
   getContent(): Promise<Content[]>;
@@ -43,10 +47,16 @@ export interface IStorage {
   createContent(item: InsertContent): Promise<Content>;
   updateContent(id: string, data: Partial<InsertContent>): Promise<Content | undefined>;
   deleteContent(id: string): Promise<boolean>;
+  clearContent(): Promise<void>;
 
   // Style Settings
   getStyleSettings(): Promise<StyleSettings | undefined>;
   createOrUpdateStyleSettings(settings: InsertStyleSettings): Promise<StyleSettings>;
+
+  // Watched Topics
+  getWatchedTopics(): Promise<WatchedTopic[]>;
+  createWatchedTopic(topic: InsertWatchedTopic): Promise<WatchedTopic>;
+  deleteWatchedTopic(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -111,6 +121,10 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
 
+  async clearActivities(): Promise<void> {
+    await db.delete(activities);
+  }
+
   // Content
   async getContent(): Promise<Content[]> {
     return db.select().from(content).orderBy(desc(content.createdAt));
@@ -139,6 +153,10 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  async clearContent(): Promise<void> {
+    await db.delete(content);
+  }
+
   // Style Settings
   async getStyleSettings(): Promise<StyleSettings | undefined> {
     const [settings] = await db.select().from(styleSettings).limit(1);
@@ -156,6 +174,21 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(styleSettings).values(settings).returning();
     return created;
+  }
+
+  // Watched Topics
+  async getWatchedTopics(): Promise<WatchedTopic[]> {
+    return db.select().from(watchedTopics).orderBy(desc(watchedTopics.createdAt));
+  }
+
+  async createWatchedTopic(topic: InsertWatchedTopic): Promise<WatchedTopic> {
+    const [created] = await db.insert(watchedTopics).values(topic).returning();
+    return created;
+  }
+
+  async deleteWatchedTopic(id: string): Promise<boolean> {
+    const result = await db.delete(watchedTopics).where(eq(watchedTopics.id, id)).returning();
+    return result.length > 0;
   }
 }
 

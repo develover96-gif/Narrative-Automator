@@ -12,6 +12,8 @@ import Dashboard from "@/pages/dashboard";
 import Integrations from "@/pages/integrations";
 import Activities from "@/pages/activities";
 import ContentQueue from "@/pages/content";
+import Analytics from "@/pages/analytics";
+import Topics from "@/pages/topics";
 import Settings from "@/pages/settings";
 
 function Router() {
@@ -21,6 +23,8 @@ function Router() {
       <Route path="/integrations" component={Integrations} />
       <Route path="/activities" component={Activities} />
       <Route path="/content" component={ContentQueue} />
+      <Route path="/analytics" component={Analytics} />
+      <Route path="/topics" component={Topics} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
@@ -29,19 +33,19 @@ function Router() {
 
 function App() {
   const style = {
-    "--sidebar-width": "280px",
+    "--sidebar-width": "260px",
     "--sidebar-width-icon": "4rem",
   };
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="buildpublic-theme">
+      <ThemeProvider defaultTheme="light" storageKey="linkedqueue-theme">
         <TooltipProvider>
           <SidebarProvider style={style as React.CSSProperties}>
             <div className="flex h-screen w-full">
               <AppSidebar />
               <div className="flex flex-col flex-1 overflow-hidden">
-                <header className="flex items-center justify-between gap-4 p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <header className="flex items-center justify-between gap-4 px-5 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                   <SidebarTrigger data-testid="button-sidebar-toggle" />
                   <ThemeToggle />
                 </header>

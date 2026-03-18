@@ -6,13 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   Save,
   Loader2,
@@ -122,6 +115,7 @@ export default function Settings() {
 
   const [tone, setTone] = useState("professional");
   const [style, setStyle] = useState("builder");
+  const [format, setFormat] = useState("post");
   const [examples, setExamples] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [avoidWords, setAvoidWords] = useState<string[]>([]);
@@ -131,6 +125,7 @@ export default function Settings() {
     if (settings) {
       setTone(settings.tone);
       setStyle(settings.style);
+      setFormat((settings as any).format || "post");
       setExamples(settings.examples || []);
       setKeywords(settings.keywords || []);
       setAvoidWords(settings.avoidWords || []);
@@ -141,6 +136,7 @@ export default function Settings() {
     mutationFn: async (data: {
       tone: string;
       style: string;
+      format: string;
       examples: string[];
       keywords: string[];
       avoidWords: string[];
@@ -167,6 +163,7 @@ export default function Settings() {
     saveMutation.mutate({
       tone,
       style,
+      format,
       examples,
       keywords,
       avoidWords,
@@ -245,28 +242,24 @@ export default function Settings() {
               Set the overall tone for your generated content
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Select value={tone} onValueChange={setTone}>
-              <SelectTrigger data-testid="select-tone">
-                <SelectValue placeholder="Select tone" />
-              </SelectTrigger>
-              <SelectContent>
-                {toneOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{option.label}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {option.description}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">
-                {toneOptions.find(t => t.value === tone)?.description}
-              </p>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {toneOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTone(option.value)}
+                  className={`text-left p-3 rounded-lg border-2 transition-all ${
+                    tone === option.value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  data-testid={`tone-${option.value}`}
+                >
+                  <p className="font-medium text-sm">{option.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
+                </button>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -278,28 +271,57 @@ export default function Settings() {
               Choose your personal branding style
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Select value={style} onValueChange={setStyle}>
-              <SelectTrigger data-testid="select-style">
-                <SelectValue placeholder="Select style" />
-              </SelectTrigger>
-              <SelectContent>
-                {styleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{option.label}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {option.description}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">
-                {styleOptions.find(s => s.value === style)?.description}
-              </p>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {styleOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setStyle(option.value)}
+                  className={`text-left p-3 rounded-lg border-2 transition-all ${
+                    style === option.value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  data-testid={`style-${option.value}`}
+                >
+                  <p className="font-medium text-sm">{option.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Default Post Format</CardTitle>
+            <CardDescription>
+              Choose the default format for AI-generated content
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { value: "post", label: "Short Post", description: "Quick insights, hooks, and updates. 150–300 chars." },
+                { value: "long_form", label: "Long Form", description: "Detailed stories and lessons. 500–1300 chars." },
+                { value: "carousel", label: "Carousel Script", description: "Slide-by-slide breakdown for visual posts." },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFormat(option.value)}
+                  className={`text-left p-4 rounded-lg border-2 transition-all ${
+                    format === option.value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  data-testid={`format-${option.value}`}
+                >
+                  <p className="font-medium text-sm">{option.label}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
+                </button>
+              ))}
             </div>
           </CardContent>
         </Card>

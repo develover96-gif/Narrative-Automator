@@ -179,22 +179,45 @@ function ContentCard({
 }
 
 function ContentPreview({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const lines = content.split("\n");
+  const isLong = lines.length > 8 || content.length > 400;
+  const previewContent = isLong && !expanded
+    ? content.slice(0, 400) + "..."
+    : content;
+
   return (
-    <div className="border rounded-lg p-6 bg-card">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-          <span className="text-lg font-bold text-primary">Y</span>
+    <div className="border rounded-xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+      <div className="p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shrink-0">
+            <span className="text-base font-bold text-primary-foreground">YN</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <p className="font-semibold text-sm">Your Name</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Technical Founder • Building in Public</p>
+            <p className="text-xs text-muted-foreground">2nd</p>
+          </div>
         </div>
         <div>
-          <p className="font-semibold">Your Name</p>
-          <p className="text-sm text-muted-foreground">Technical Founder • Building in Public</p>
+          <p className="text-sm whitespace-pre-wrap text-foreground leading-relaxed">{previewContent}</p>
+          {isLong && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs text-primary mt-1 hover:underline"
+            >
+              {expanded ? "see less" : "...see more"}
+            </button>
+          )}
         </div>
       </div>
-      <p className="whitespace-pre-wrap text-foreground">{content}</p>
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t text-muted-foreground">
-        <span className="text-sm">0 Likes</span>
-        <span className="text-sm">0 Comments</span>
-        <span className="text-sm">0 Reposts</span>
+      <div className="border-t px-4 py-2 flex items-center gap-4 text-xs text-muted-foreground">
+        <span>👍 Like</span>
+        <span>💬 Comment</span>
+        <span>🔁 Repost</span>
+        <span>✉️ Send</span>
       </div>
     </div>
   );

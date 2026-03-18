@@ -14,21 +14,21 @@ export const users = pgTable("users", {
 // Integration settings table - stores connection configs
 export const integrations = pgTable("integrations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  type: text("type").notNull(), // 'github', 'linear', 'jira', 'asana'
-  status: text("status").notNull().default("disconnected"), // 'connected', 'disconnected', 'syncing', 'error'
+  type: text("type").notNull(), // 'github', 'linear', 'jira', 'asana', 'stripe'
+  status: text("status").notNull().default("disconnected"),
   lastSyncAt: timestamp("last_sync_at"),
-  config: jsonb("config"), // stores additional config like selected repos/projects
+  config: jsonb("config"),
 });
 
 // Activities table - events from integrations
 export const activities = pgTable("activities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   integrationId: varchar("integration_id").references(() => integrations.id),
-  source: text("source").notNull(), // 'github', 'linear'
-  type: text("type").notNull(), // 'commit', 'issue_completed', 'pr_merged', 'milestone'
+  source: text("source").notNull(),
+  type: text("type").notNull(), // 'commit', 'issue_completed', 'pr_merged', 'milestone', 'revenue_milestone'
   title: text("title").notNull(),
   description: text("description"),
-  metadata: jsonb("metadata"), // stores raw event data
+  metadata: jsonb("metadata"),
   eventDate: timestamp("event_date").notNull().default(sql`now()`),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
   isProcessed: boolean("is_processed").default(false),
@@ -40,9 +40,11 @@ export const content = pgTable("content", {
   activityId: varchar("activity_id").references(() => activities.id),
   title: text("title"),
   body: text("body").notNull(),
+  contentType: text("content_type").notNull().default("post"), // 'post', 'carousel', 'long_form'
   status: text("status").notNull().default("draft"), // 'draft', 'scheduled', 'published', 'archived'
   scheduledAt: timestamp("scheduled_at"),
   publishedAt: timestamp("published_at"),
+  engagementMetrics: jsonb("engagement_metrics"), // { views, likes, comments, shares }
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
   updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
 });
@@ -50,11 +52,20 @@ export const content = pgTable("content", {
 // Style settings table - user preferences for content generation
 export const styleSettings = pgTable("style_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tone: text("tone").notNull().default("professional"), // 'professional', 'casual', 'technical', 'storytelling'
-  style: text("style").notNull().default("builder"), // 'builder', 'contrarian', 'data-focused', 'humble'
-  examples: text("examples").array(), // sample posts for style reference
-  keywords: text("keywords").array(), // preferred keywords/phrases
-  avoidWords: text("avoid_words").array(), // words to avoid
+  tone: text("tone").notNull().default("professional"),
+  style: text("style").notNull().default("builder"),
+  format: text("format").notNull().default("post"),
+  examples: text("examples").array(),
+  keywords: text("keywords").array(),
+  avoidWords: text("avoid_words").array(),
+});
+
+// Watched topics - influencers / keywords to monitor
+export const watchedTopics = pgTable("watched_topics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  keyword: text("keyword").notNull(),
+  type: text("type").notNull().default("keyword"), // 'keyword', 'influencer', 'competitor'
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 
 // Relations
@@ -102,6 +113,11 @@ export const insertStyleSettingsSchema = createInsertSchema(styleSettings).omit(
   id: true,
 });
 
+export const insertWatchedTopicSchema = createInsertSchema(watchedTopics).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -117,3 +133,6 @@ export type Content = typeof content.$inferSelect;
 
 export type InsertStyleSettings = z.infer<typeof insertStyleSettingsSchema>;
 export type StyleSettings = typeof styleSettings.$inferSelect;
+
+export type InsertWatchedTopic = z.infer<typeof insertWatchedTopicSchema>;
+export type WatchedTopic = typeof watchedTopics.$inferSelect;

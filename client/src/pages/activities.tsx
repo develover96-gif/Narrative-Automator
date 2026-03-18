@@ -164,7 +164,7 @@ export default function Activities() {
   const generateMutation = useMutation({
     mutationFn: async (activityId: string) => {
       setGeneratingId(activityId);
-      return apiRequest("POST", "/api/content/generate", { activityId });
+      return apiRequest("POST", `/api/activities/${activityId}/generate`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
